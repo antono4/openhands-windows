@@ -142,6 +142,17 @@ set LLM_API_KEY=your-api-key
 setup.bat
 ```
 
+### Custom Workspace Folder
+
+By default, the workspace mounted into the agent is **this repo**.
+If you want the workspace to be a different folder, set `WORKSPACE_DIR` before running `setup.bat`:
+
+```batch
+set WORKSPACE_DIR=C:\Users\User\Desktop\Applying for Job
+
+setup.bat
+```
+
 ### Environment Variables
 
 | Variable | Default | Description |
@@ -150,6 +161,7 @@ setup.bat
 | `LLM_BASE_URL` | `http://host.docker.internal:8000/v1` | LLM server endpoint |
 | `LLM_API_KEY` | `local-llm` | API key for authentication |
 | `OPENHANDS_URL` | `http://localhost:3000` | OpenHands server URL |
+| `WORKSPACE_DIR` | Repo root | Windows path to mount at `/workspace` |
 
 ---
 

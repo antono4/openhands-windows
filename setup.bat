@@ -49,11 +49,18 @@ if not defined LLM_MODEL set "LLM_MODEL=gpt-oss-120b"
 echo Using model: %LLM_MODEL%
 
 echo [4/7] Computing workspace mount path...
-for /f "usebackq delims=" %%P in (`powershell -NoProfile -Command "$p = Resolve-Path '%REPO_ROOT%'; $p = $p.Path; $drive = $p.Substring(0,1).ToLower(); $rest = $p.Substring(2) -replace '\\\\','/'; Write-Output \"/run/desktop/mnt/host/$drive$rest\""` ) do set "WORKSPACE_POSIX=%%P"
+set "WORKSPACE_WIN=%REPO_ROOT%"
+if defined WORKSPACE_DIR set "WORKSPACE_WIN=%WORKSPACE_DIR%"
+if not exist "%WORKSPACE_WIN%" (
+  echo Workspace path not found: %WORKSPACE_WIN%
+  exit /b 1
+)
+for /f "usebackq delims=" %%P in (`powershell -NoProfile -Command "$p = Resolve-Path '%WORKSPACE_WIN%'; $p = $p.Path; $drive = $p.Substring(0,1).ToLower(); $rest = $p.Substring(2) -replace '\\\\','/'; Write-Output \"/run/desktop/mnt/host/$drive$rest\""` ) do set "WORKSPACE_POSIX=%%P"
 if not defined WORKSPACE_POSIX (
   echo Failed to compute workspace path for Docker.
   exit /b 1
 )
+echo Workspace: %WORKSPACE_WIN%
 
 if not defined LLM_BASE_URL set "LLM_BASE_URL=http://host.docker.internal:8000/v1"
 if not defined LLM_API_KEY set "LLM_API_KEY=local-llm"
