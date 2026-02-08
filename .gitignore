@@ -1,3 +1,4 @@
 .venv/
+open hand/.venv/
 __pycache__/
 *.pyc
