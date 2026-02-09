@@ -162,10 +162,31 @@ def wait_for_ready(
     timeout: int,
 ):
     deadline = time.time() + timeout
+    last_runtime_status = None
+    status_check_interval = 5  # check conversation status every N seconds
+    last_status_check = 0.0
     while True:
         if time.time() > deadline:
             print("[timeout] agent did not become ready")
             return last_id, False
+
+        # Periodically check conversation status to detect runtime failures early
+        now = time.time()
+        if now - last_status_check >= status_check_interval:
+            last_status_check = now
+            try:
+                conv = get_conversation_status(base_url, conversation_id)
+                runtime_status = conv.get("status")
+                if runtime_status and runtime_status != last_runtime_status:
+                    print(f"[status] {runtime_status}")
+                    last_runtime_status = runtime_status
+                if runtime_status in ("ERROR", "STOPPED"):
+                    error_msg = conv.get("error") or conv.get("status_message") or "unknown error"
+                    print(f"[error] runtime failed: {error_msg}")
+                    print("[hint] check logs: docker logs openhands-app")
+                    return last_id, False
+            except (urllib.error.URLError, TimeoutError, Exception):
+                pass
 
         try:
             resp = get_json(
@@ -185,13 +206,25 @@ def wait_for_ready(
             obs = e.get("observation")
             action = e.get("action")
             extras = e.get("extras") or {}
-            state = extras.get("agent_state") or (e.get("args") or {}).get(
-                "agent_state"
-            )
+            args = e.get("args") or {}
+            state = extras.get("agent_state") or args.get("agent_state")
+            msg = e.get("message") or ""
+
+            # Surface error events
+            if obs == "error" or action == "error":
+                error_msg = e.get("content") or msg or "unknown error"
+                print(f"[error] {error_msg}")
+                print("[hint] check logs: docker logs openhands-app")
+                return last_id, False
+
             if (obs == "agent_state_changed" or action == "change_agent_state") and (
                 state == "awaiting_user_input"
             ):
                 return last_id, True
+            elif (obs == "agent_state_changed" or action == "change_agent_state") and state == "error":
+                print(f"[error] agent entered error state")
+                print("[hint] check logs: docker logs openhands-app")
+                return last_id, False
 
         time.sleep(poll_interval)
 
@@ -249,12 +282,15 @@ def main():
         last_id = -1
 
     if not args.no_wait_ready:
+        print("Waiting for runtime container to start...")
         last_id, ready = wait_for_ready(
             base_url, conversation_id, last_id, args.poll_interval, args.timeout
         )
         if not ready:
-            print("[error] agent did not become ready; try again")
+            print("[error] agent did not become ready")
+            print("[hint] check logs: docker logs openhands-app")
             sys.exit(1)
+        print("Runtime ready.")
 
     def send_and_wait(message: str):
         nonlocal last_id

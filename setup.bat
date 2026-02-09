@@ -49,13 +49,15 @@ if not defined LLM_MODEL set "LLM_MODEL=gpt-oss-120b"
 echo Using model: %LLM_MODEL%
 
 echo [4/7] Computing workspace mount path...
-set "WORKSPACE_WIN=%REPO_ROOT%"
+rem Default workspace is the parent of the repo root (so sibling projects are visible)
+for %%I in ("%REPO_ROOT%\..") do set "WORKSPACE_WIN=%%~fI"
 if defined WORKSPACE_DIR set "WORKSPACE_WIN=%WORKSPACE_DIR%"
 if not exist "%WORKSPACE_WIN%" (
   echo Workspace path not found: %WORKSPACE_WIN%
   exit /b 1
 )
-for /f "usebackq delims=" %%P in (`powershell -NoProfile -Command "$p = Resolve-Path '%WORKSPACE_WIN%'; $p = $p.Path; $drive = $p.Substring(0,1).ToLower(); $rest = $p.Substring(2) -replace '\\\\','/'; Write-Output \"/run/desktop/mnt/host/$drive$rest\""` ) do set "WORKSPACE_POSIX=%%P"
+rem Convert Windows path to Docker Desktop POSIX path
+for /f "usebackq tokens=*" %%P in (`powershell -NoProfile -Command "$ws = [System.IO.Path]::GetFullPath('%WORKSPACE_WIN%'); $drive = $ws.Substring(0,1).ToLower(); $rest = $ws.Substring(2).Replace('\','/'); Write-Host \"/run/desktop/mnt/host/$drive$rest\""`) do set "WORKSPACE_POSIX=%%P"
 if not defined WORKSPACE_POSIX (
   echo Failed to compute workspace path for Docker.
   exit /b 1
@@ -78,6 +80,7 @@ docker run -d --pull=missing ^
   -e LLM_BASE_URL=%LLM_BASE_URL% ^
   -e LLM_CUSTOM_LLM_PROVIDER=openai ^
   -e ENABLE_BROWSER=false ^
+  -e SANDBOX_SKIP_CHOWN=1 ^
   -e "SANDBOX_VOLUMES=%WORKSPACE_POSIX%:/workspace:rw" ^
   -v /var/run/docker.sock:/var/run/docker.sock ^
   -v openhands_data:/.openhands ^
@@ -93,6 +96,15 @@ if errorlevel 1 (
 echo [7/7] Applying runtime patch and restarting...
 docker cp "%REPO_ROOT%\open hand\docker_runtime.py" openhands-app:/app/openhands/runtime/impl/docker/docker_runtime.py >nul 2>&1
 docker restart openhands-app >nul 2>&1
+
+echo Waiting for OpenHands API to be ready...
+:wait_loop
+powershell -NoProfile -Command "try { Invoke-RestMethod -Uri http://localhost:3000/api/options/config -TimeoutSec 2 | Out-Null; exit 0 } catch { exit 1 }"
+if errorlevel 1 (
+  timeout /t 3 /nobreak >nul
+  goto wait_loop
+)
+echo OpenHands API is ready.
 
 echo.
 echo Setup complete.

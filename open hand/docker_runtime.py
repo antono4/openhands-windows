@@ -495,6 +495,21 @@ class DockerRuntime(ActionExecutionClient):
         )
 
         command = self.get_action_execution_server_startup_command()
+
+        # On Docker Desktop for Windows, recursive chown on workspace bind
+        # mounts is extremely slow and unnecessary (Windows doesn't have Unix
+        # ownership).  When SANDBOX_SKIP_CHOWN is set, patch runtime_init.py
+        # to replace the chown -R with a no-op before starting the server.
+        if os.environ.get('SANDBOX_SKIP_CHOWN'):
+            import shlex
+            original_cmd = ' '.join(shlex.quote(c) for c in command)
+            command = [
+                '/bin/sh', '-c',
+                "sed -i \"s/chown -R/echo skip-chown/g\" "
+                "/openhands/code/openhands/runtime/utils/runtime_init.py; "
+                f"exec {original_cmd}",
+            ]
+
         self.log('info', f'Starting server with command: {command}')
 
         if self.config.sandbox.enable_gpu:
