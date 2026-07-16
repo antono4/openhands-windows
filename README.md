@@ -1,5 +1,8 @@
 # OpenHands Windows Bridge
 
+> **Created by Antono**
+
+
 > **Run OpenHands AI coding agent on Windows with local LLM models**
 
 A complete Windows integration for [OpenHands](https://github.com/All-Hands-AI/OpenHands) that enables seamless operation with local OpenAI-compatible model servers. One-command setup, automatic Docker configuration, and intelligent container lifecycle management.
