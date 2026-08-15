@@ -11,7 +11,7 @@
   <a href="https://github.com/antono4/openhands-windows"><img alt="GitHub repo" src="https://img.shields.io/badge/GitHub-antono4/openhands-windows-blue?logo=github"></a>
   <a href="https://antono4.github.io/openhands-windows/"><img alt="Live Demo" src="https://img.shields.io/badge/Live%20Demo-Online-success?logo=githubpages"></a>
   <img alt="Files" src="https://img.shields.io/badge/Files-9-informational">
-  <img alt="Updated" src="https://img.shields.io/badge/Updated-2026-08-16 05:21:09 WIB-lightgrey">
+  <img alt="Updated" src="https://img.shields.io/badge/Updated-2026-08-16 06:19:56 WIB-lightgrey">
 </p>
 
 ---
@@ -61,4 +61,4 @@ Lihat berkas [`LICENSE`](./LICENSE) untuk informasi lisensi.
 
 ---
 
-<sub>README ini di-generate otomatis pada **2026-08-16 05:21:09 WIB** oleh GitHub Actions .</sub>
+<sub>README ini di-generate otomatis pada **2026-08-16 06:19:56 WIB** oleh GitHub Actions .</sub>
