@@ -1,2 +1,26 @@
-Last updated: 2026-09-15 08:49:38 WIB
-Last updated: 2026-09-15 08:53:07 WIB
+# openhands-windows
+
+
+
+## 📋 Overview
+
+This repository contains **13 files** and is built with the following technologies:
+
+Python
+
+## 🚀 Quick Start
+
+## ✨ Features
+
+- 📝 Auto-generated documentation
+
+## 🛠️ Technologies
+
+Python
+
+## 📄 License
+
+MIT License
+
+---
+*Last updated: 2026-09-15 12:03:14 WIB*
